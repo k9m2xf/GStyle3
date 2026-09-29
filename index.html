@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>摄影风格 2 → 3</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 1.5rem 1rem 3rem; max-width: 34rem;
+    font: 16px/1.65 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+  .sub { color: var(--gray, #666); margin: 0 0 1.2rem; font-size: .95rem; }
+  /* shared dashed-zone look: the photo drop area and the mask-pack picker */
+  .dropbox {
+    border: 2px dashed var(--line, #bbb); border-radius: 14px;
+    text-align: center; cursor: pointer; user-select: none;
+  }
+  .dropbox.over { border-color: #3b82f6; }
+  #drop { padding: 2rem 1rem; }
+  #drop strong { display: block; font-size: 1.05rem; }
+  #drop span { color: var(--gray, #666); font-size: .85rem; }
+  #file { display: none; }
+  .opts { margin: 1rem 0 0; display: grid; grid-template-columns: auto 1fr; gap: .35rem 0; align-items: start; }
+  .opts[hidden] { display: none; }
+  .opts > label { color: var(--gray, #666); font-size: .9rem; }
+  /* the file-input row stacks vertically: pick box on its own row, footnote below */
+  .opts.stack { grid-template-columns: 1fr; }
+  /* the native file input stays focusable but invisible; its label is the box */
+  #masks { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  #maskstatus {
+    display: block; padding: .9rem 1rem; margin: 0;
+    color: var(--gray, #666); font-size: .9rem;
+  }
+  #maskstatus:hover { border-color: #3b82f6; }
+  #maskstatus.loaded { color: #16a34a; border-color: #16a34a; }
+  #maskstatus.error { color: #dc2626; border-color: #dc2626; }
+  .footnote { color: var(--gray, #666); font-size: .85rem; padding-left: .15rem; }
+  .row {
+    border: 1px solid var(--line, #ddd); border-radius: 12px;
+    padding: .8rem 1rem; margin-top: 1rem;
+  }
+  .row .name { font-weight: 600; word-break: break-all; }
+  .row .notes { margin: .4rem 0 .6rem; padding-left: 1.2rem; font-size: .9rem; }
+  .row .notes .err { color: #dc2626; list-style: none; margin-left: -1.2rem; }
+  .btn {
+    display: inline-block; background: #2563eb; color: #fff; text-decoration: none;
+    padding: .5rem 1rem; border-radius: 999px; font-size: .95rem;
+  }
+  .note {
+    margin-top: 2.5rem; font-size: .85rem; color: var(--gray, #666);
+    border-top: 1px solid var(--line, #ddd); padding-top: 1rem;
+  }
+  .foot {
+    margin-top: 2rem; font-size: .8rem; color: var(--gray, #666);
+    opacity: .8;
+  }
+</style>
+</head>
+<body>
+  <h1>摄影风格 2 → 3</h1>
+  <p class="sub">
+    适用于 iPhone 16/17 系列的照片：保留照片 Apple 原始摄影风格 2 的数据，只叠加摄影风格 3 标记（texture_styles 与 12 个语义 matte），在照片中解锁 质感 / 胶片颗粒 / 光晕编辑。
+  </p>
+  <div id="drop" class="dropbox" role="button" tabindex="0">
+    <strong>拖放 HEIC 照片，或点按选取</strong>
+    <span>全部处理在本机完成，照片不会上传</span>
+  </div>
+  <input type="file" id="file" multiple accept="image/heic,image/heif,.heic,.heif">
+
+  <div class="opts">
+    <input type="checkbox" id="skin" checked>
+    <label for="skin">
+      柔肤（实验性）：唯一依赖语义掩码的质感效果——颗粒、光晕是全局效果，不受此开关影响；柔肤只平滑掩码圈出的皮肤区域。开启后会在浏览器内自动分割并编码真实掩码，照片自带旧代皮肤掩码（2019 semanticskinmatte）时一并复用兜底；关闭则不生成任何掩码，柔肤无效果。
+    </label>
+  </div>
+  <div class="opts stack" id="maskrow" hidden>
+    <input type="file" id="masks" accept=".json,application/json">
+    <label id="maskstatus" class="dropbox" for="masks">
+      此浏览器不支持自动处理，请手动载入照片对应的掩码包。
+    </label>
+    <small class="footnote">用 tools/make_masks.py 生成 mask-pack.json，点按上方框框选择，载入后优先级最高。</small>
+  </div>
+
+  <div id="list"></div>
+
+  <p class="note">
+    转换默认在浏览器里直接完成分割与编码（首次约 4 MB 模型/运行时下载，之后由浏览器缓存）。HEVC 在线编码仅 Safari/iOS/macOS 支持，其他平台需要手动载入照片对应的掩码包。输出按 iOS 编辑副本命名：IMG_0001.HEIC → IMG_E0001.HEIC。传回 iPhone 时请用<b>隔空投送 / 文件</b>，经「照片图库」共享会转码丢数据。柔肤效果只作用于皮肤区域——没有人脸的照片将不会产生变化。
+  </p>
+
+  <footer class="foot">
+    <span>v0.3.6</span>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
